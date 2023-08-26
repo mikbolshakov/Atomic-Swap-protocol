@@ -1,0 +1,3 @@
+[submodule "atomic-swap/lib/forge-std"]
+	path = atomic-swap/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
