@@ -5,10 +5,6 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import {Wallet, NotAnOwner} from "../src/Wallet.sol";
 
-// forge test -vvv
-// forge coverage
-// forge test --gas-report
-// forge test --help
 contract WalletTest is Test {
     Wallet public wallet;
     address public testContrct = address(this);
