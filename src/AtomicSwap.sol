@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
 import "openzeppelin/token/ERC20/ERC20.sol";
 import "openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import "upgrades/Initializable.sol";
 
-contract AtomicSwap {
+contract AtomicSwap is Initializable {
     using SafeERC20 for IERC20;
 
     struct Swap {
@@ -17,7 +18,7 @@ contract AtomicSwap {
         bool finished;
     }
 
-    IERC20 immutable token;
+    IERC20 token;
     Swap[] swaps;
 
     event SwapInitiated(
@@ -29,8 +30,12 @@ contract AtomicSwap {
     event SwapSuccessful(uint256 indexed id, bytes password);
     event SwapCanceled(uint256 indexed id);
 
-    constructor(IERC20 tokenAddress) {
+    function initialize(IERC20 tokenAddress) public initializer {
         token = tokenAddress;
+    }
+
+    function getSwapTokenAddress() external view returns (address) {
+        return address(token);
     }
 
     function getSwapInformation(

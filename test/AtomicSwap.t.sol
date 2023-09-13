@@ -15,6 +15,8 @@ contract AtomicSwapTest is Test {
     SwapToken public tokenChainB;
     address public userChainA = makeAddr("userA");
     address public userChainB = makeAddr("userB");
+    bytes32 passwordHash =
+        0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa;
 
     event SwapInitiated(
         uint256 indexed id,
@@ -30,19 +32,23 @@ contract AtomicSwapTest is Test {
 
         vm.startPrank(userChainA);
         tokenChainA = new SwapToken();
-        contractChainA = new AtomicSwap(tokenChainA);
+        contractChainA = new AtomicSwap();
+        contractChainA.initialize(tokenChainA);
 
         changePrank(userChainB);
         tokenChainB = new SwapToken();
-        contractChainB = new AtomicSwap(tokenChainB);
+        contractChainB = new AtomicSwap();
+        contractChainB.initialize(tokenChainB);
     }
 
     function test_MakeHash() public {
         bytes32 hash = contractChainA.makeHash("complex password");
-        assertEq(
-            hash,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        assertEq(hash, passwordHash);
+    }
+
+    function test_GetSwapTokenAddress() public {
+        address swapTokenAddress = contractChainA.getSwapTokenAddress();
+        assertEq(swapTokenAddress, address(tokenChainA));
     }
 
     function test_Deposit() public {
@@ -50,44 +56,28 @@ contract AtomicSwapTest is Test {
         tokenChainA.approve(address(contractChainA), 10000);
 
         vm.expectEmit(true, true, true, true);
-        emit SwapInitiated(0, userChainA, userChainB, 0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        emit SwapInitiated(0, userChainA, userChainB, passwordHash);
+        contractChainA.deposit(userChainB, 1000, 300, passwordHash);
 
         changePrank(userChainB);
         tokenChainB.approve(address(contractChainB), 1000);
 
         vm.expectEmit(true, true, true, true);
-        emit SwapInitiated(0, userChainB, userChainA, 0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa);
-        contractChainB.deposit(
-            userChainA,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
-
+        emit SwapInitiated(0, userChainB, userChainA, passwordHash);
+        contractChainB.deposit(userChainA, 1000, 300, passwordHash);
     }
 
     function test_GetSwapInformation() public {
         test_Deposit();
         changePrank(userChainA);
 
-        AtomicSwap.Swap memory swap = contractChainA.getSwapInformation(
-            0
-        );
+        AtomicSwap.Swap memory swap = contractChainA.getSwapInformation(0);
         assertEq(swap.sender, userChainA);
         assertEq(swap.recipient, userChainB);
         assertEq(swap.createdTime, block.timestamp);
         assertEq(swap.duration, 300);
         assertEq(swap.amount, 1000);
-        assertEq(
-            swap.hash,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        assertEq(swap.hash, passwordHash);
         assertEq(swap.finished, false);
     }
 

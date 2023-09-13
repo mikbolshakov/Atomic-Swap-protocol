@@ -1,14 +1,26 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
+import "openzeppelin/access/Ownable.sol";
 import "./AtomicSwap.sol";
 
-contract AtomicFactory {
+contract AtomicFactory is Ownable {
+    address[] swapTokens;
+
     event NewAtomicSwapContract(address indexed atomicSwapAddress);
 
-    function deployAtomic(address _swapToken) external {
-        AtomicSwap atomic = new AtomicSwap(IERC20(_swapToken));
+    function getSwapTokenAddress(uint256 _id) external view returns (address) {
+        return swapTokens[_id];
+    }
 
-        emit NewAtomicSwapContract(address(atomic));
+    function deployAtomic(IERC20 _swapToken) external onlyOwner {
+        bytes32 salt = keccak256(abi.encodePacked(_swapToken));
+        address atomicSwapAddress;
+        atomicSwapAddress = address(new AtomicSwap{salt: salt}());
+
+        AtomicSwap(atomicSwapAddress).initialize(_swapToken);
+        swapTokens.push(atomicSwapAddress);
+
+        emit NewAtomicSwapContract(atomicSwapAddress);
     }
 }
