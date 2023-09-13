@@ -73,14 +73,8 @@ contract AtomicSwapTest is Test {
     }
 
     function test_GetSwapInformation() public {
+        test_Deposit();
         changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
 
         AtomicSwap.Swap memory swap = contractChainA.getSwapInformation(
             0
@@ -98,25 +92,7 @@ contract AtomicSwapTest is Test {
     }
 
     function test_Withdraw() public {
-        changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
-
-        changePrank(userChainB);
-        tokenChainB.approve(address(contractChainB), 1000);
-        contractChainB.deposit(
-            userChainA,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
-
-        changePrank(userChainA);
+        test_Deposit();
 
         vm.expectEmit(true, true, true, true);
         emit SwapSuccessful(0, bytes("complex password"));
@@ -124,23 +100,7 @@ contract AtomicSwapTest is Test {
     }
 
     function test_CancelSwap() public {
-        changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
-
-        changePrank(userChainB);
-        tokenChainB.approve(address(contractChainB), 1000);
-        contractChainB.deposit(
-            userChainA,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        test_Deposit();
 
         vm.warp(block.timestamp + 301);
         changePrank(userChainA);
@@ -151,30 +111,15 @@ contract AtomicSwapTest is Test {
     }
 
     function test_CancelSwapNotExpired() public {
+        test_Deposit();
         changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
 
         vm.expectRevert(bytes("Not expired"));
         contractChainA.cancelSwap(0);
     }
 
     function test_CancelSwapAlreadyFinished() public {
-        changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
-
-        changePrank(userChainB);
+        test_Deposit();
         contractChainA.withdraw(0, bytes("complex password"));
 
         vm.warp(block.timestamp + 301);
@@ -185,16 +130,8 @@ contract AtomicSwapTest is Test {
     }
 
     function test_WithdrawAlreadyFinished() public {
-        changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        test_Deposit();
 
-        changePrank(userChainB);
         contractChainA.withdraw(0, bytes("complex password"));
 
         vm.expectRevert(bytes("Swap already finished"));
@@ -202,33 +139,17 @@ contract AtomicSwapTest is Test {
     }
 
     function test_WithdrawWrongPassword() public {
-        changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        test_Deposit();
 
-        changePrank(userChainB);
         vm.expectRevert(bytes("Wrong password!"));
         contractChainA.withdraw(0, bytes("complex"));
     }
 
     function test_WithdrawSwapExpired() public {
-        changePrank(userChainA);
-        tokenChainA.approve(address(contractChainA), 10000);
-        contractChainA.deposit(
-            userChainB,
-            1000,
-            300,
-            0x85dd02dce2325c2807c76f58c90a944de5527e1240e6babfd9a30099e6039faa
-        );
+        test_Deposit();
 
         vm.warp(block.timestamp + 301);
 
-        changePrank(userChainB);
         vm.expectRevert(bytes("Swap expired"));
         contractChainA.withdraw(0, bytes("complex password"));
     }
